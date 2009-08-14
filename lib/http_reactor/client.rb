@@ -89,7 +89,7 @@ module HttpReactor #:nodoc:
     def connection_closed(conn)
       puts "Connection closed: #{conn}"
     end
-    def fatalIOException(ex, onn)
+    def fatal_i_o_exception(ex, conn)
       puts "Fatal I/O error: #{ex.message}"
     end
     def fatal_protocol_exception(ex, conn)
@@ -113,16 +113,23 @@ module HttpReactor #:nodoc:
     # * <tt>handler_proc</tt>: A Proc that will be called with the response and context
     # * <tt>session_request_callback</tt>: A class that implements the session request
     #   callback interface found in the HttpCore library.
-    def initialize(uris=[], handler_proc=nil, session_request_callback=SessionRequestCallback)
+    # * <tt>options: A hash of configuration options. See below.
+    # 
+    # The options hash may include the following options
+    # * <tt>:so_timeout</tt>: (default = 5 seconds)
+    # * <tt>:connection_timeout</tt>: The HTTP connection timeout (default = 10 seconds)
+    # * <tt>:socket_buffer_size</tt>: The buffer size (defaults to 8Kb)
+    # * <tt>:stale_connection_check</tt>: (defaults to false)
+    # * <tt>:tcp_nodelay</tt>: (defaults to true)
+    # * <tt>:user_agent</tt>: The user agent string to send (defaults to "JRubyHttpReactor")
+    # * <tt>:event_listener</tt>: A class that implements the org.apache.http.nio.protocol interface
+    def initialize(uris=[], handler_proc=nil, options={})
       handler_proc ||= default_handler_proc
+      session_request_callback = SessionRequestCallback
       
-      params = BasicHttpParams.new
-      params.set_int_parameter(CoreConnectionPNames.SO_TIMEOUT, 5000)
-      params.set_int_parameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
-      params.set_int_parameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024)
-      params.set_boolean_parameter(CoreConnectionPNames.STALE_CONNECTION_CHECK, false)
-      params.set_boolean_parameter(CoreConnectionPNames.TCP_NODELAY, true)
-      params.set_parameter(CoreProtocolPNames.USER_AGENT, "JRubyHttpReactor/0.0.1")
+      initialize_options(options)
+      
+      params = build_params(options)
       
       io_reactor = DefaultConnectingIOReactor.new(2, params);
       
@@ -143,8 +150,8 @@ module HttpReactor #:nodoc:
         org.apache.http.impl.DefaultConnectionReuseStrategy.new,
         params
       )
-       
-      handler.event_listener = EventLogger.new
+      
+      handler.event_listener = options[:event_listener].new if options[:event_listener]
       
       io_event_dispatch = DefaultClientIOEventDispatch.new(handler, params)
 
@@ -182,6 +189,34 @@ module HttpReactor #:nodoc:
     end
     
     private
+    
+    def initialize_options(options)
+      options[:so_timeout] ||= 5000
+      options[:connection_timeout] ||= 10000
+      options[:socket_buffer_size] ||= 8 * 1024
+      options[:stale_connection_check] ||= false
+      options[:tcp_nodelay] ||= true
+      options[:user_agent] ||= "JRubyHttpReactor"
+      #options[:event_listener] ||= EventLogger
+    end
+    
+    def build_params(options)
+      params = BasicHttpParams.new
+      params.set_int_parameter(
+        CoreConnectionPNames.SO_TIMEOUT, options[:so_timeout])
+      params.set_int_parameter(
+        CoreConnectionPNames.CONNECTION_TIMEOUT, options[:connection_timeout])
+      params.set_int_parameter(
+        CoreConnectionPNames.SOCKET_BUFFER_SIZE, options[:socket_buffer_size])
+      params.set_boolean_parameter(
+        CoreConnectionPNames.STALE_CONNECTION_CHECK, options[:stale_connection_check])
+      params.set_boolean_parameter(
+        CoreConnectionPNames.TCP_NODELAY, options[:tcp_nodelay])
+      params.set_parameter(
+        CoreProtocolPNames.USER_AGENT, options[:user_agent])
+      params
+    end
+    
     def default_handler_proc
       Proc.new { |response, context|
         target_host = context.get_attribute(ExecutionContext.HTTP_TARGET_HOST);
@@ -193,9 +228,7 @@ module HttpReactor #:nodoc:
 
           puts "--------------"
           puts "Response from #{target_host}#{target_path}"
-          puts "--------------"
           puts response.status_line
-          puts "--------------"
           puts "Document length: #{content.length}"
           puts "--------------"
         rescue java.io.IOException => ex
