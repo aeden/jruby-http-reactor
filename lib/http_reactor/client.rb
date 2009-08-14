@@ -9,8 +9,9 @@ module HttpReactor
     
     HTTP_TARGET_PATH = 'http_target_path'
     
-    def initialize(request_count)
+    def initialize(request_count, handler_proc)
       @request_count = request_count
+      @handler_proc = handler_proc
     end
     
     def initalize_context(context, attachment)
@@ -42,24 +43,8 @@ module HttpReactor
     end
      
     def handle_response(response, context)
-      target_host = context.get_attribute(ExecutionContext.HTTP_TARGET_HOST);
-      target_path = context.get_attribute(HTTP_TARGET_PATH)
+      @handler_proc.call(response, context)
       
-      entity = response.entity
-      begin
-        content = org.apache.http.util.EntityUtils.toString(entity)
-
-        puts "--------------"
-        puts "Response from #{target_host}#{target_path}"
-        puts "--------------"
-        puts response.status_line
-        puts "--------------"
-        puts "Document length: #{content.length}"
-        puts "--------------"
-      rescue java.io.IOException => ex
-        puts "I/O error in handle_response: #{ex.message}"
-      end
-
       context.setAttribute(RESPONSE_RECEIVED, true)
 
       # Signal completion of the request execution
@@ -121,14 +106,22 @@ module HttpReactor
     import org.apache.http.impl.nio.reactor
     
     # Create a new HttpReactor client that will request the given URIs.
-    def initialize(uris=[], session_request_callback=SessionRequestCallback)
+    #
+    # Parameters:
+    # * <tt>uris</tt>: An array of URI objects.
+    # * <tt>handler_proc</tt>: A Proc that will be called with the response and context
+    # * <tt>session_request_callback</tt>: A class that implements the session request
+    # callback interface found in the HttpCore library.
+    def initialize(uris=[], handler_proc=nil, session_request_callback=SessionRequestCallback)
+      handler_proc ||= default_handler_proc
+      
       params = BasicHttpParams.new
       params.set_int_parameter(CoreConnectionPNames.SO_TIMEOUT, 5000)
       params.set_int_parameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
       params.set_int_parameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024)
       params.set_boolean_parameter(CoreConnectionPNames.STALE_CONNECTION_CHECK, false)
       params.set_boolean_parameter(CoreConnectionPNames.TCP_NODELAY, true)
-      params.set_parameter(CoreProtocolPNames.USER_AGENT, "HttpComponents/1.1")
+      params.set_parameter(CoreProtocolPNames.USER_AGENT, "JRubyHttpReactor/0.0.1")
       
       io_reactor = DefaultConnectingIOReactor.new(2, params);
       
@@ -145,7 +138,7 @@ module HttpReactor
 
       handler = BufferingHttpClientHandler.new(
         httpproc,
-        RequestExecutionHandler.new(request_count),
+        RequestExecutionHandler.new(request_count, handler_proc),
         org.apache.http.impl.DefaultConnectionReuseStrategy.new,
         params
       )
@@ -185,6 +178,29 @@ module HttpReactor
       io_reactor.shutdown()
 
       puts "Done"
+    end
+    
+    private
+    def default_handler_proc
+      Proc.new { |response, context|
+        target_host = context.get_attribute(ExecutionContext.HTTP_TARGET_HOST);
+        target_path = context.get_attribute(RequestExecutionHandler::HTTP_TARGET_PATH)
+
+        entity = response.entity
+        begin
+          content = org.apache.http.util.EntityUtils.toString(entity)
+
+          puts "--------------"
+          puts "Response from #{target_host}#{target_path}"
+          puts "--------------"
+          puts response.status_line
+          puts "--------------"
+          puts "Document length: #{content.length}"
+          puts "--------------"
+        rescue java.io.IOException => ex
+          puts "I/O error in handle_response: #{ex.message}"
+        end 
+      }
     end
     
   end

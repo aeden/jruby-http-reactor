@@ -22,7 +22,7 @@ end
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gemspec|
-    gemspec.name = "jruby-typica"
+    gemspec.name = "jruby-http-reactor"
     gemspec.summary = "JRuby NIO HTTP client."
     gemspec.email = "anthonyeden@gmail.com"
     gemspec.homepage = "http://github.com/aeden/jruby-http-reactor"
