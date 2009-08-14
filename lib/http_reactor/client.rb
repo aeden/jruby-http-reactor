@@ -12,6 +12,7 @@ module HttpReactor
     end
     
     def initalize_context(context, attachment)
+      puts "attachment: #{attachment.inspect}"
       context.set_attribute(ExecutionContext.HTTP_TARGET_HOST, attachment);
     end
     
@@ -86,19 +87,19 @@ module HttpReactor
   class EventLogger
     import org.apache.http.nio.protocol
     include EventListener
-    def connectionOpen(conn)
+    def connection_open(conn)
       puts "Connection open: #{conn}"
     end
-    def connectionTimeout(conn)
+    def connection_timeout(conn)
       puts "Connection timed out: #{conn}"
     end
-    def connectionClosed(conn)
+    def connection_closed(conn)
       puts "Connection closed: #{conn}"
     end
     def fatalIOException(ex, onn)
       puts "I/O error: #{ex.message}"
     end
-    def fatalProtocolException(ex, conn)
+    def fatal_protocol_exception(ex, conn)
       puts "HTTP error: #{ex.message}"
     end
   end
@@ -111,7 +112,8 @@ module HttpReactor
     import org.apache.http.impl.nio
     import org.apache.http.impl.nio.reactor
     
-    def initialize(hosts=[], session_request_callback=SessionRequestCallback)
+    # Create a new HttpReactor client that will request the given URIs.
+    def initialize(uris=[], session_request_callback=SessionRequestCallback)
       params = BasicHttpParams.new
       params.set_int_parameter(CoreConnectionPNames.SO_TIMEOUT, 5000)
       params.set_int_parameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000)
@@ -149,44 +151,22 @@ module HttpReactor
         begin
           puts "Executing IO reactor"
           io_reactor.execute(io_event_dispatch)
-        rescue InterruptedIOException => e
+        rescue java.io.InterruptedIOException => e
           puts "Interrupted"
-        rescue IOException => e
+        rescue java.io.IOException => e
           puts "I/O error: #{e.message}"
         end
         puts "Shutdown"
       end
       
-      hosts.each do |host|
+      uris.each do |uri|
         io_reactor.connect(
-          java.net.InetSocketAddress.new(host, 80), 
+          java.net.InetSocketAddress.new(uri.host, uri.port), 
           nil, 
-          HttpHost.new(host),
+          HttpHost.new(uri.host),
           session_request_callback.new(request_count)
         )
       end
-      
-      # reqs = [];
-      #       reqs << io_reactor.connect(
-      #         java.net.InetSocketAddress.new("www.yahoo.com", 80), 
-      #         nil, 
-      #         HttpHost.new("www.yahoo.com"),
-      #         SessionRequestCallback.new(request_count)
-      #       )
-      #       reqs << io_reactor.connect(
-      #         java.net.InetSocketAddress.new("www.google.com", 80), 
-      #         nil,
-      #         HttpHost.new("www.google.com"),
-      #         SessionRequestCallback.new(request_count)
-      #       )
-      #       reqs << io_reactor.connect(
-      #         java.net.InetSocketAddress.new("www.apache.org", 80), 
-      #         nil,
-      #         HttpHost.new("www.apache.org"),
-      #         SessionRequestCallback.new(request_count)
-      #       )
-      
-      puts "Awaiting completion of request execution"
       
       # Block until all connections signal
       # completion of the request execution
