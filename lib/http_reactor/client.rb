@@ -7,13 +7,15 @@ module HttpReactor
     REQUEST_SENT       = "request-sent"
     RESPONSE_RECEIVED  = "response-received"
     
+    HTTP_TARGET_PATH = 'http_target_path'
+    
     def initialize(request_count)
       @request_count = request_count
     end
     
     def initalize_context(context, attachment)
-      puts "attachment: #{attachment.inspect}"
-      context.set_attribute(ExecutionContext.HTTP_TARGET_HOST, attachment);
+      context.set_attribute(ExecutionContext.HTTP_TARGET_HOST, attachment[:host]);
+      context.set_attribute(HTTP_TARGET_PATH, attachment[:path])
     end
     
     def finalize_context(context)
@@ -23,33 +25,39 @@ module HttpReactor
     
     def submit_request(context)
       target_host = context.get_attribute(ExecutionContext.HTTP_TARGET_HOST);
+      target_path = context.get_attribute(HTTP_TARGET_PATH)
       flag = context.get_attribute(REQUEST_SENT);
       if flag.nil?
         # Stick some object into the context
         context.set_attribute(REQUEST_SENT, true);
 
         puts "--------------"
-        puts "Sending request to #{target_host}"
+        puts "Sending request to #{target_host}#{target_path}"
         puts "--------------"
 
-        org.apache.http.message.BasicHttpRequest.new("GET", "/")
+        org.apache.http.message.BasicHttpRequest.new("GET", target_path)
       else
         # No new request to submit
       end
     end
      
     def handle_response(response, context)
+      target_host = context.get_attribute(ExecutionContext.HTTP_TARGET_HOST);
+      target_path = context.get_attribute(HTTP_TARGET_PATH)
+      
       entity = response.entity
       begin
         content = org.apache.http.util.EntityUtils.toString(entity)
 
+        puts "--------------"
+        puts "Response from #{target_host}#{target_path}"
         puts "--------------"
         puts response.status_line
         puts "--------------"
         puts "Document length: #{content.length}"
         puts "--------------"
       rescue java.io.IOException => ex
-        puts "I/O error: #{ex.message}"
+        puts "I/O error in handle_response: #{ex.message}"
       end
 
       context.setAttribute(RESPONSE_RECEIVED, true)
@@ -97,7 +105,7 @@ module HttpReactor
       puts "Connection closed: #{conn}"
     end
     def fatalIOException(ex, onn)
-      puts "I/O error: #{ex.message}"
+      puts "Fatal I/O error: #{ex.message}"
     end
     def fatal_protocol_exception(ex, conn)
       puts "HTTP error: #{ex.message}"
@@ -133,7 +141,7 @@ module HttpReactor
       
       # We are going to use this object to synchronize between the 
       # I/O event and main threads
-      request_count = java.util.concurrent.CountDownLatch.new(3);
+      request_count = java.util.concurrent.CountDownLatch.new(uris.length);
 
       handler = BufferingHttpClientHandler.new(
         httpproc,
@@ -154,7 +162,7 @@ module HttpReactor
         rescue java.io.InterruptedIOException => e
           puts "Interrupted"
         rescue java.io.IOException => e
-          puts "I/O error: #{e.message}"
+          puts "I/O error in reactor execution thread: #{e.message}"
         end
         puts "Shutdown"
       end
@@ -163,7 +171,7 @@ module HttpReactor
         io_reactor.connect(
           java.net.InetSocketAddress.new(uri.host, uri.port), 
           nil, 
-          HttpHost.new(uri.host),
+          {:host => HttpHost.new(uri.host), :path => uri.path},
           session_request_callback.new(request_count)
         )
       end

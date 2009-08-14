@@ -6,7 +6,8 @@ class ClientTest < Test::Unit::TestCase
       uris = [
         'http://www.yahoo.com/', 
         'http://www.google.com/', 
-        'http://www.apache.org/'
+        'http://www.apache.org/',
+        'http://anthony.mp/about_me'
       ].map { |url_string| URI.parse(url_string) }
       HttpReactor::Client.new(uris)
     end
