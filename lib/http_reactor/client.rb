@@ -1,5 +1,5 @@
-module HttpReactor
-  class RequestExecutionHandler
+module HttpReactor #:nodoc:
+  class RequestExecutionHandler #:nodoc:
     import org.apache.http.protocol
     import org.apache.http.nio.protocol
     include HttpRequestExecutionHandler
@@ -52,7 +52,7 @@ module HttpReactor
     end
   end
   
-  class SessionRequestCallback
+  class SessionRequestCallback #:nodoc:
     include org.apache.http.nio.reactor.SessionRequestCallback
     
     def initialize(request_count)
@@ -77,7 +77,7 @@ module HttpReactor
     end
   end
   
-  class EventLogger
+  class EventLogger #:nodoc:
     import org.apache.http.nio.protocol
     include EventListener
     def connection_open(conn)
@@ -97,6 +97,7 @@ module HttpReactor
     end
   end
   
+  # An HTTP client that uses the Reactor pattern.
   class Client
     import org.apache.http
     import org.apache.http.params
@@ -111,7 +112,7 @@ module HttpReactor
     # * <tt>uris</tt>: An array of URI objects.
     # * <tt>handler_proc</tt>: A Proc that will be called with the response and context
     # * <tt>session_request_callback</tt>: A class that implements the session request
-    # callback interface found in the HttpCore library.
+    #   callback interface found in the HttpCore library.
     def initialize(uris=[], handler_proc=nil, session_request_callback=SessionRequestCallback)
       handler_proc ||= default_handler_proc
       
