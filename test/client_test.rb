@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/test_helper'
+require 'uri'
 
 class ClientTest < Test::Unit::TestCase
   def uris
