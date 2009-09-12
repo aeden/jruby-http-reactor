@@ -23,4 +23,11 @@ class ClientTest < Test::Unit::TestCase
     }
     HttpReactor::Client.new(uris, handler)
   end
+  
+  def test_block
+    HttpReactor::Client.new(uris) do |response, context|
+      puts "Response: #{response.status_line.status_code}"
+    end
+  end
+  
 end
