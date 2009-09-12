@@ -5,12 +5,12 @@
 # Dependencies:
 #
 # hpricot (0.6.164)
-# threadify (1.1.0)
+# threadify (1.1.0) (optional, uncomment in code)
 
 require 'uri'
 require 'rubygems'
 require 'hpricot'
-require 'threadify'
+#require 'threadify'
 require File.dirname(__FILE__) + '/../lib/http_reactor'
 
 def uris
