@@ -14,14 +14,17 @@ require 'threadify'
 require File.dirname(__FILE__) + '/../lib/http_reactor'
 
 def uris
-  xml = File.read(ARGV.pop)
-  doc = Hpricot::XML(xml)
-  urls = (doc/'outline').map { |outline| outline['xmlUrl'] }
-  urls.map { |url_string| URI.parse(url_string) }
-end
-
-uris.threadify(:each_slice, 2) do |slice|
-  HttpReactor::Client.new(slice) do |response, context|
-    puts "Response: #{response.status_line.status_code}"
+  @uris ||= begin
+    xml = File.read(ARGV.pop)
+    doc = Hpricot::XML(xml)
+    urls = (doc/'outline').map { |outline| outline['xmlUrl'] }
+    urls.map { |url_string| URI.parse(url_string) }
   end
 end
+
+#uris.threadify(:each_slice, 1) do |slice|
+  HttpReactor::Client.new(uris) do |response, context|
+    puts "Response: #{response.status_line.status_code}"
+  end
+#end
+puts "Processed #{uris.length} feeds"
