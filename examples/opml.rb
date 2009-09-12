@@ -1,6 +1,11 @@
 #!/usr/bin/env ruby
 #
 # Usage: jruby examples/opml.rb opml.xml
+#
+# Dependencies:
+#
+# hpricot (0.6.164)
+# threadify (1.1.0)
 
 require 'uri'
 require 'rubygems'
