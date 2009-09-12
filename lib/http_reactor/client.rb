@@ -8,6 +8,7 @@ module HttpReactor #:nodoc:
     RESPONSE_RECEIVED  = "response-received"
     
     HTTP_TARGET_PATH = 'http_target_path'
+    HTTP_TARGET_REQUEST = 'http_target_request'
     
     def initialize(request_count, handler_proc)
       @request_count = request_count
@@ -15,8 +16,9 @@ module HttpReactor #:nodoc:
     end
     
     def initalize_context(context, attachment)
-      context.set_attribute(ExecutionContext.HTTP_TARGET_HOST, attachment[:host]);
+      context.set_attribute(ExecutionContext.HTTP_TARGET_HOST, attachment[:host])
       context.set_attribute(HTTP_TARGET_PATH, attachment[:path])
+      context.set_attribute(HTTP_TARGET_REQUEST, attachment[:request])
     end
     
     def finalize_context(context)
@@ -27,6 +29,7 @@ module HttpReactor #:nodoc:
     def submit_request(context)
       target_host = context.get_attribute(ExecutionContext.HTTP_TARGET_HOST);
       target_path = context.get_attribute(HTTP_TARGET_PATH)
+      target_request = context.get_attribute(HTTP_TARGET_REQUEST)
       flag = context.get_attribute(REQUEST_SENT);
       if flag.nil?
         # Stick some object into the context
@@ -36,7 +39,9 @@ module HttpReactor #:nodoc:
         puts "Sending request to #{target_host}#{target_path}"
         puts "--------------"
 
-        org.apache.http.message.BasicHttpRequest.new("GET", target_path)
+        org.apache.http.message.BasicHttpEntityEnclosingRequest.new(
+          target_request.method, target_path
+        )
       else
         # No new request to submit
       end
@@ -123,7 +128,7 @@ module HttpReactor #:nodoc:
     # * <tt>:tcp_nodelay</tt>: (defaults to true)
     # * <tt>:user_agent</tt>: The user agent string to send (defaults to "JRubyHttpReactor")
     # * <tt>:event_listener</tt>: A class that implements the org.apache.http.nio.protocol interface
-    def initialize(uris=[], handler_proc=nil, options={})
+    def initialize(requests=[], handler_proc=nil, options={})
       handler_proc ||= default_handler_proc
       session_request_callback = SessionRequestCallback
       
@@ -142,7 +147,7 @@ module HttpReactor #:nodoc:
       
       # We are going to use this object to synchronize between the 
       # I/O event and main threads
-      request_count = java.util.concurrent.CountDownLatch.new(uris.length);
+      request_count = java.util.concurrent.CountDownLatch.new(requests.length);
 
       handler = BufferingHttpClientHandler.new(
         httpproc,
@@ -168,11 +173,17 @@ module HttpReactor #:nodoc:
         puts "Shutdown"
       end
       
-      uris.each do |uri|
+      requests.each do |request|
+        uri = request.uri
+        attachment = {
+          :host => HttpHost.new(uri.host), 
+          :path => uri.path,
+          :request => request
+        }
         io_reactor.connect(
           java.net.InetSocketAddress.new(uri.host, uri.port), 
           nil, 
-          {:host => HttpHost.new(uri.host), :path => uri.path},
+          attachment,
           session_request_callback.new(request_count)
         )
       end

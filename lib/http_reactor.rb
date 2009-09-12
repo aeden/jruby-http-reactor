@@ -9,4 +9,5 @@ end
 
 $:.unshift(File.dirname(__FILE__))
 
+require 'http_reactor/request'
 require 'http_reactor/client'

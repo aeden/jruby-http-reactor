@@ -13,18 +13,18 @@ require 'hpricot'
 #require 'threadify'
 require File.dirname(__FILE__) + '/../lib/http_reactor'
 
-def uris
-  @uris ||= begin
+def requests
+  @requests ||= begin
     xml = File.read(ARGV.pop)
     doc = Hpricot::XML(xml)
     urls = (doc/'outline').map { |outline| outline['xmlUrl'] }
-    urls.map { |url_string| URI.parse(url_string) }
+    urls.map { |url_string| HttpReactor::Request.new(URI.parse(url_string)) }
   end
 end
 
 #uris.threadify(:each_slice, 1) do |slice|
-  HttpReactor::Client.new(uris) do |response, context|
+  HttpReactor::Client.new(requests) do |response, context|
     puts "Response: #{response.status_line.status_code}"
   end
 #end
-puts "Processed #{uris.length} feeds"
+puts "Processed #{requests.length} feeds"

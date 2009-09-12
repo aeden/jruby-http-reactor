@@ -2,18 +2,18 @@ require File.dirname(__FILE__) + '/test_helper'
 require 'uri'
 
 class ClientTest < Test::Unit::TestCase
-  def uris
-    @uris ||= [
+  def requests
+    @requests ||= [
       'http://www.yahoo.com/', 
       'http://www.google.com/', 
       'http://www.apache.org/',
       'http://anthony.mp/about_me'
-    ].map { |url_string| URI.parse(url_string) }
+    ].map { |url_string| HttpReactor::Request.new(URI.parse(url_string)) }
   end
   
   def test_new
     assert_nothing_raised do
-      HttpReactor::Client.new(uris)
+      HttpReactor::Client.new(requests)
     end
   end
   
@@ -21,11 +21,11 @@ class ClientTest < Test::Unit::TestCase
     handler = Proc.new { |response, context|
       puts "Response: #{response.status_line.status_code}"
     }
-    HttpReactor::Client.new(uris, handler)
+    HttpReactor::Client.new(requests, handler)
   end
   
   def test_block
-    HttpReactor::Client.new(uris) do |response, context|
+    HttpReactor::Client.new(requests) do |response, context|
       puts "Response: #{response.status_line.status_code}"
     end
   end
