@@ -2,22 +2,26 @@
 
 Gem::Specification.new do |s|
   s.name = %q{jruby-http-reactor}
-  s.version = "0.0.1"
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Anthony Eden"]
-  s.date = %q{2009-08-13}
+  s.date = %q{2009-09-12}
   s.description = %q{}
   s.email = %q{anthonyeden@gmail.com}
   s.extra_rdoc_files = [
     "README.rdoc"
   ]
   s.files = [
-    "README.rdoc",
+    ".gitignore",
+     "README.rdoc",
      "Rakefile",
      "VERSION",
+     "examples/opml.rb",
+     "jruby-http-reactor.gemspec",
      "lib/http_reactor.rb",
      "lib/http_reactor/client.rb",
+     "lib/http_reactor/request.rb",
      "test/client_test.rb",
      "test/test_helper.rb",
      "vendor/httpcore-4.0.1.jar",
@@ -31,7 +35,8 @@ Gem::Specification.new do |s|
   s.summary = %q{JRuby NIO HTTP client.}
   s.test_files = [
     "test/client_test.rb",
-     "test/test_helper.rb"
+     "test/test_helper.rb",
+     "examples/opml.rb"
   ]
 
   if s.respond_to? :specification_version then
