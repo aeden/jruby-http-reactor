@@ -1,6 +1,8 @@
 A client that uses the Apache HttpCore NIO library to do HTTP requests.
 
 <pre>
+require 'http_reactor'
+  
 uris = ['http://www.yahoo.com/','http://www.google.com/']
 requests = uris.map { |uri| HttpReactor::Request.new(uri) }
 
