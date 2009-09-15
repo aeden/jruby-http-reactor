@@ -17,9 +17,13 @@ module HttpReactor #:nodoc:
       @response_impl.entity
     end
     
+    def code
+      status_line.status_code
+    end
+    
     # Get the response content type
     def content_type
-      @response_impl.entity.content_type
+      @response_impl.entity.content_type.value
     end
     
     # Get the response content length
@@ -30,9 +34,9 @@ module HttpReactor #:nodoc:
     # Get the body text
     def body
       begin
-        entity = @response_impl.entity
-        content_stream = entity.content
-        io = Java.java_to_ruby(org.jruby.RubyIO.new(JRuby.runtime, content_stream).java_object)
+        io = Java.java_to_ruby(
+          org.jruby.RubyIO.new(JRuby.runtime, entity.content).java_object
+        )
         io.read
       rescue Exception => e
         puts "Error in Response#body: #{e.message}"
