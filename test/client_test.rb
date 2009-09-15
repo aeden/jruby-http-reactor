@@ -18,15 +18,21 @@ class ClientTest < Test::Unit::TestCase
   end
   
   def test_proc
-    handler = Proc.new { |response, context|
+    handler = Proc.new do |response, context|
       puts "Proc Response: #{response.status_line.status_code}"
-    }
+      puts "Body Length: #{response.body.length}"
+    end
     HttpReactor::Client.new(requests, handler)
   end
   
   def test_block
     HttpReactor::Client.new(requests) do |response, context|
-      puts "Block Response: #{response.status_line.status_code}"
+      begin
+        puts "Block Response: #{response.status_line.status_code}"
+        puts "Body Length: #{response.body.length}"
+      rescue Exception => e
+        puts "Error executing test_block worker: #{e.message}"
+      end
     end
   end
   

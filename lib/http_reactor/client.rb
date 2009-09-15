@@ -48,12 +48,16 @@ module HttpReactor #:nodoc:
     end
      
     def handle_response(response, context)
-      @handler_proc.call(response, context)
+      begin
+        @handler_proc.call(HttpReactor::Response.new(response), context)
       
-      context.setAttribute(RESPONSE_RECEIVED, true)
+        context.setAttribute(RESPONSE_RECEIVED, true)
 
-      # Signal completion of the request execution
-      @request_count.count_down()
+        # Signal completion of the request execution
+        @request_count.count_down()
+      rescue => e
+        puts "Error handling response: #{e.message}"
+      end
     end
   end
   
