@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env jruby
 #
 # Usage: jruby examples/opml.rb opml.xml
 #
@@ -25,6 +25,7 @@ end
 #uris.threadify(:each_slice, 1) do |slice|
   HttpReactor::Client.new(requests) do |response, context|
     puts "Response: #{response.status_line.status_code}"
+    puts "Content length: #{response.body.length}"
   end
 #end
 puts "Processed #{requests.length} feeds"
