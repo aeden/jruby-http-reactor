@@ -128,7 +128,8 @@ module HttpReactor #:nodoc:
     # * <tt>:tcp_nodelay</tt>: (defaults to true)
     # * <tt>:user_agent</tt>: The user agent string to send (defaults to "JRubyHttpReactor")
     # * <tt>:event_listener</tt>: A class that implements the org.apache.http.nio.protocol interface
-    def initialize(requests=[], handler_proc=nil, options={})
+    def initialize(requests=[], handler_proc=nil, options={}, &block)
+      handler_proc = block if block_given?
       handler_proc ||= default_handler_proc
       session_request_callback = SessionRequestCallback
       

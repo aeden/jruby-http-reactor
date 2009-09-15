@@ -19,14 +19,14 @@ class ClientTest < Test::Unit::TestCase
   
   def test_proc
     handler = Proc.new { |response, context|
-      puts "Response: #{response.status_line.status_code}"
+      puts "Proc Response: #{response.status_line.status_code}"
     }
     HttpReactor::Client.new(requests, handler)
   end
   
   def test_block
     HttpReactor::Client.new(requests) do |response, context|
-      puts "Response: #{response.status_line.status_code}"
+      puts "Block Response: #{response.status_line.status_code}"
     end
   end
   
