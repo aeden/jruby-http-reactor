@@ -182,7 +182,7 @@ module HttpReactor #:nodoc:
         uri = request.uri
         attachment = {
           :host => HttpHost.new(uri.host), 
-          :path => uri.path,
+          :path => uri.request_uri,
           :request => request
         }
         io_reactor.connect(

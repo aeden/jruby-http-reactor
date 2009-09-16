@@ -8,7 +8,8 @@ class ClientTest < Test::Unit::TestCase
       'http://www.yahoo.com/', 
       'http://www.google.com/', 
       'http://www.apache.org/',
-      'http://anthony.mp/about_me'
+      'http://anthony.mp/about_me',
+      'http://search.twitter.com/search?q=jruby'
     ].map { |url_string| HttpReactor::Request.new(URI.parse(url_string)) }
   end
   
