@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{jruby-http-reactor}
-  s.version = "0.2.0"
+  s.version = "0.3.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Anthony Eden"]
@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
      "lib/http_reactor.rb",
      "lib/http_reactor/client.rb",
      "lib/http_reactor/request.rb",
+     "lib/http_reactor/response.rb",
      "test/client_test.rb",
      "test/test_helper.rb",
      "vendor/httpcore-4.0.1.jar",
