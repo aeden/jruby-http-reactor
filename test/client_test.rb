@@ -5,7 +5,7 @@ require 'mime/types'
 class ClientTest < Test::Unit::TestCase
   def requests
     @requests ||= [
-      'http://www.yahoo.com/', 
+      'http://yahoo.com/', 
       'http://www.google.com/', 
       'http://www.apache.org/',
       'http://anthony.mp/about_me',
@@ -40,9 +40,9 @@ class ClientTest < Test::Unit::TestCase
       assert response.body.length > 0
       puts "=== HEADERS ==="
       puts response.headers.inspect
-      puts "===== BODY ===="
-      puts response.body
-      puts "==============="
+      # puts "===== BODY ===="
+      # puts response.body
+      # puts "==============="
     end
   end
   

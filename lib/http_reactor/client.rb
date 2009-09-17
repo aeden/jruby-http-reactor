@@ -9,6 +9,8 @@ module HttpReactor #:nodoc:
     
     HTTP_TARGET_PATH = 'http_target_path'
     HTTP_TARGET_REQUEST = 'http_target_request'
+    IO_REACTOR = "io_reactor"
+    REDIRECT_HISTORY = "redirect_history"
     
     def initialize(request_count, handler_proc)
       @request_count = request_count
@@ -19,6 +21,8 @@ module HttpReactor #:nodoc:
       context.set_attribute(ExecutionContext.HTTP_TARGET_HOST, attachment[:host])
       context.set_attribute(HTTP_TARGET_PATH, attachment[:path])
       context.set_attribute(HTTP_TARGET_REQUEST, attachment[:request])
+      context.set_attribute(IO_REACTOR, attachment[:io_reactor])
+      context.set_attribute(REDIRECT_HISTORY, attachment[:redirect_history] || [])
     end
     
     def finalize_context(context)
@@ -49,12 +53,29 @@ module HttpReactor #:nodoc:
      
     def handle_response(response, context)
       begin
-        @handler_proc.call(HttpReactor::Response.new(response), context)
-      
-        context.setAttribute(RESPONSE_RECEIVED, true)
-
-        # Signal completion of the request execution
-        @request_count.count_down()
+        res = HttpReactor::Response.new(response)
+        case res.code
+        when 301, 302
+          redirect_to = res.headers['Location']
+          redirect_history = context.getAttribute(REDIRECT_HISTORY)
+          if redirect_history.include?(redirect_to)
+            puts "Too many redirects"
+            context.setAttribute(RESPONSE_RECEIVED, true)
+            @request_count.count_down()
+          else
+            puts "Redirecting to #{redirect_to}"
+            redirect_history << redirect_to
+            context.setAttribute(REDIRECT_HISTORY, redirect_history)
+            requests = [HttpReactor::Request.new(URI.parse(redirect_to))]
+            io_reactor = context.getAttribute(IO_REACTOR)
+            HttpReactor::Client.process_requests(requests, io_reactor, @request_count)
+          end
+        else
+          @handler_proc.call(res, context)
+          context.setAttribute(RESPONSE_RECEIVED, true)
+          # Signal completion of the request execution
+          @request_count.count_down()
+        end
       rescue => e
         puts "Error handling response: #{e.message}"
       end
@@ -135,7 +156,6 @@ module HttpReactor #:nodoc:
     def initialize(requests=[], handler_proc=nil, options={}, &block)
       handler_proc = block if block_given?
       handler_proc ||= default_handler_proc
-      session_request_callback = SessionRequestCallback
       
       initialize_options(options)
       
@@ -152,11 +172,11 @@ module HttpReactor #:nodoc:
       
       # We are going to use this object to synchronize between the 
       # I/O event and main threads
-      request_count = java.util.concurrent.CountDownLatch.new(requests.length);
+      request_counter = java.util.concurrent.CountDownLatch.new(requests.length);
 
       handler = BufferingHttpClientHandler.new(
         httpproc,
-        RequestExecutionHandler.new(request_count, handler_proc),
+        RequestExecutionHandler.new(request_counter, handler_proc),
         org.apache.http.impl.DefaultConnectionReuseStrategy.new,
         params
       )
@@ -178,30 +198,39 @@ module HttpReactor #:nodoc:
         puts "Shutdown"
       end
       
-      requests.each do |request|
-        uri = request.uri
-        attachment = {
-          :host => HttpHost.new(uri.host), 
-          :path => uri.request_uri,
-          :request => request
-        }
-        io_reactor.connect(
-          java.net.InetSocketAddress.new(uri.host, uri.port), 
-          nil, 
-          attachment,
-          session_request_callback.new(request_count)
-        )
-      end
+      process_requests(requests, io_reactor, request_counter)
       
       # Block until all connections signal
       # completion of the request execution
-      request_count.await()
+      request_counter.await()
 
       puts "Shutting down I/O reactor"
 
       io_reactor.shutdown()
 
       puts "Done"
+    end
+    
+    def process_requests(requests, io_reactor, request_counter)
+      HttpReactor::Client.process_requests(requests, io_reactor, request_counter)
+    end
+    
+    def self.process_requests(requests, io_reactor, request_counter)
+      requests.each do |request|
+        uri = request.uri
+        attachment = {
+          :host => HttpHost.new(uri.host), 
+          :path => uri.request_uri,
+          :request => request,
+          :io_reactor => io_reactor
+        }
+        io_reactor.connect(
+          java.net.InetSocketAddress.new(uri.host, uri.port), 
+          nil, 
+          attachment,
+          SessionRequestCallback.new(request_counter)
+        )
+      end
     end
     
     private
