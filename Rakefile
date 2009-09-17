@@ -29,6 +29,7 @@ begin
     gemspec.description = ""
     gemspec.authors = ["Anthony Eden"]
     gemspec.files.exclude 'docs/**/*'
+    gemspec.files.exclude '.gitignore'
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
