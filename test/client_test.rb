@@ -38,14 +38,11 @@ class ClientTest < Test::Unit::TestCase
       puts "request ur: #{context.getAttribute('http_target_request').uri}"
       puts "content-length: #{response.content_length}"
       assert response.body.length > 0
-    end
-  end
-  
-  def test_body
-    HttpReactor::Client.new(requests) do |response, context|
-      if response.code == 200
-        puts response.body
-      end
+      puts "=== HEADERS ==="
+      puts response.headers.inspect
+      puts "===== BODY ===="
+      puts response.body
+      puts "==============="
     end
   end
   

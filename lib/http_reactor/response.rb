@@ -23,23 +23,39 @@ module HttpReactor #:nodoc:
     
     # Get the response content type
     def content_type
-      @response_impl.entity.content_type.value
+      @content_type ||= @response_impl.entity.content_type.value
     end
     
     # Get the response content length
     def content_length
-      @response_impl.entity.content_length
+      @content_length ||= @response_impl.entity.content_length
+    end
+    
+    def headers
+      @headers ||= begin
+        h = Hash.new
+        @response_impl.all_headers.each do |header|
+          if h[header.name]
+            h[header.name] = [h[header.name], header.value]
+          else
+            h[header.name] = header.value
+          end
+        end
+        h
+      end
     end
     
     # Get the body text
     def body
-      begin
-        io = Java.java_to_ruby(
-          org.jruby.RubyIO.new(JRuby.runtime, entity.content).java_object
-        )
-        io.read
-      rescue Exception => e
-        puts "Error in Response#body: #{e.message}"
+      @body ||= begin
+        begin
+          io = Java.java_to_ruby(
+            org.jruby.RubyIO.new(JRuby.runtime, entity.content).java_object
+          )
+          io.read
+        rescue Exception => e
+          puts "Error in Response#body: #{e.message}"
+        end
       end
     end
   end
