@@ -39,9 +39,9 @@ module HttpReactor #:nodoc:
         # Stick some object into the context
         context.set_attribute(REQUEST_SENT, true);
 
-        puts "--------------"
-        puts "Sending request to #{target_host}#{target_path}"
-        puts "--------------"
+        #puts "--------------"
+        #puts "Sending request to #{target_host}#{target_path}"
+        #puts "--------------"
 
         org.apache.http.message.BasicHttpEntityEnclosingRequest.new(
           target_request.method, target_path
@@ -59,16 +59,17 @@ module HttpReactor #:nodoc:
           redirect_to = res.headers['Location']
           redirect_history = context.getAttribute(REDIRECT_HISTORY)
           if redirect_history.include?(redirect_to)
-            puts "Too many redirects"
+            #puts "Too many redirects"
             context.setAttribute(RESPONSE_RECEIVED, true)
             @request_count.count_down()
           else
-            puts "Redirecting to #{redirect_to}"
+            #puts "Redirecting to #{redirect_to}"
             redirect_history << redirect_to
             context.setAttribute(REDIRECT_HISTORY, redirect_history)
-            requests = [HttpReactor::Request.new(URI.parse(redirect_to))]
+            request = context.getAttribute(HTTP_TARGET_REQUEST)
+            request.uri = URI.parse(redirect_to)
             io_reactor = context.getAttribute(IO_REACTOR)
-            HttpReactor::Client.process_requests(requests, io_reactor, @request_count)
+            HttpReactor::Client.process_requests([request], io_reactor, @request_count)
           end
         else
           @handler_proc.call(res, context)
@@ -188,14 +189,14 @@ module HttpReactor #:nodoc:
       Thread.abort_on_exception = true
       t = Thread.new do
         begin
-          puts "Executing IO reactor"
+          #puts "Executing IO reactor"
           io_reactor.execute(io_event_dispatch)
         rescue java.io.InterruptedIOException => e
           puts "Interrupted"
         rescue java.io.IOException => e
           puts "I/O error in reactor execution thread: #{e.message}"
         end
-        puts "Shutdown"
+        #puts "Shutdown"
       end
       
       process_requests(requests, io_reactor, request_counter)
@@ -204,11 +205,11 @@ module HttpReactor #:nodoc:
       # completion of the request execution
       request_counter.await()
 
-      puts "Shutting down I/O reactor"
+      #puts "Shutting down I/O reactor"
 
       io_reactor.shutdown()
 
-      puts "Done"
+      #puts "Done"
     end
     
     def process_requests(requests, io_reactor, request_counter)
