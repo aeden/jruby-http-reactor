@@ -31,6 +31,11 @@ module HttpReactor #:nodoc:
       @content_length ||= @response_impl.entity.content_length
     end
     
+    # Access the headers
+    def [](name)
+      headers[name]
+    end
+    
     def headers
       @headers ||= begin
         h = Hash.new
