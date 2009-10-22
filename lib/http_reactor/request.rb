@@ -9,5 +9,11 @@ module HttpReactor
       @method = method
       @payload = payload
     end
+    
+    # A hash where you can put extra stuff that should travel along
+    # with the request and be accessible in the response handler
+    def extra
+      @extra ||= {}
+    end
   end
 end
