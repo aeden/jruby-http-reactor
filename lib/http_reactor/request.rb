@@ -1,19 +1,16 @@
 module HttpReactor
   # A class that represents an HTTP request.
   class Request
-    attr_reader :uri, :method, :payload
+    attr_accessor :uri
+    attr_reader :method, :payload
+    attr_accessor :extra
     
     # Initialize the request object.
-    def initialize(uri, method='GET', payload=nil)
+    def initialize(uri, method='GET', payload=nil, extra={})
       @uri = uri
       @method = method
       @payload = payload
-    end
-    
-    # A hash where you can put extra stuff that should travel along
-    # with the request and be accessible in the response handler
-    def extra
-      @extra ||= {}
+      @extra = extra
     end
   end
 end
