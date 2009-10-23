@@ -1,5 +1,7 @@
 module HttpReactor #:nodoc:
   class RequestExecutionHandler #:nodoc:
+    import org.apache.http
+    import org.apache.http.message
     import org.apache.http.protocol
     import org.apache.http.nio.protocol
     include HttpRequestExecutionHandler
@@ -36,16 +38,19 @@ module HttpReactor #:nodoc:
       target_request = context.get_attribute(HTTP_TARGET_REQUEST)
       flag = context.get_attribute(REQUEST_SENT);
       if flag.nil?
-        # Stick some object into the context
-        context.set_attribute(REQUEST_SENT, true);
+        begin
+          # Stick some object into the context
+          context.set_attribute(REQUEST_SENT, true);
 
-        #puts "--------------"
-        #puts "Sending request to #{target_host}#{target_path}"
-        #puts "--------------"
-
-        org.apache.http.message.BasicHttpEntityEnclosingRequest.new(
-          target_request.method, target_path
-        )
+          request = org.apache.http.message.BasicHttpEntityEnclosingRequest.new(
+            target_request.method, target_path
+          )
+          request.headers = target_request.headers.map { |k, v| BasicHeader.new(k, v) }.to_java(Header)
+          request
+        rescue Exception => e
+          puts "Error submitting request: #{e.message}"
+          raise e
+        end
       else
         # No new request to submit
       end

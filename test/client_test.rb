@@ -35,7 +35,7 @@ class ClientTest < Test::Unit::TestCase
       assert_equal 200, response.code
       mime_type = MIME::Types[response.content_type].first
       assert_equal "text/html", mime_type.content_type
-      puts "request ur: #{context.getAttribute('http_target_request').uri}"
+      puts "request uri: #{context.getAttribute('http_target_request').uri}"
       puts "content-length: #{response.content_length}"
       assert response.body.length > 0
       puts "=== HEADERS ==="

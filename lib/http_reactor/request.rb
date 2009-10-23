@@ -12,5 +12,17 @@ module HttpReactor
       @payload = payload
       @extra = extra
     end
+    
+    def [](name)
+      headers[name]
+    end
+    
+    def []=(name, value)
+      headers[name] = value
+    end
+    
+    def headers
+      @headers ||= Hash.new
+    end
   end
 end
