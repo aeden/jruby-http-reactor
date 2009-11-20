@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{jruby-http-reactor}
-  s.version = "0.5.3"
+  s.version = "0.5.4"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Anthony Eden"]
-  s.date = %q{2009-10-22}
+  s.date = %q{2009-11-19}
   s.description = %q{}
   s.email = %q{anthonyeden@gmail.com}
   s.extra_rdoc_files = [
@@ -40,7 +40,8 @@ Gem::Specification.new do |s|
   s.test_files = [
     "test/client_test.rb",
      "test/test_helper.rb",
-     "examples/opml.rb"
+     "examples/opml.rb",
+     "examples/textfile.rb"
   ]
 
   if s.respond_to? :specification_version then

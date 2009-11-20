@@ -68,11 +68,15 @@ module HttpReactor #:nodoc:
             context.setAttribute(RESPONSE_RECEIVED, true)
             @request_count.count_down()
           else
-            #puts "Redirecting to #{redirect_to}"
+            
+            request = context.getAttribute(HTTP_TARGET_REQUEST)
+            request.uri.merge!(URI.parse(redirect_to))
+            redirect_to = request.uri
+            
+            puts "Redirecting to #{redirect_to}"
             redirect_history << redirect_to
             context.setAttribute(REDIRECT_HISTORY, redirect_history)
-            request = context.getAttribute(HTTP_TARGET_REQUEST)
-            request.uri = URI.parse(redirect_to)
+            
             io_reactor = context.getAttribute(IO_REACTOR)
             HttpReactor::Client.process_requests([request], io_reactor, @request_count)
           end
@@ -84,6 +88,7 @@ module HttpReactor #:nodoc:
         end
       rescue => e
         puts "Error handling response: #{e.message}"
+        puts e.backtrace.map{|t| "\t#{t}" }.join("\n")
       end
     end
   end
