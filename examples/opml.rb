@@ -1,17 +1,15 @@
-#!/usr/bin/env jruby
+#!/usr/bin/env jruby -rubygems -Ilib -Ivendor
 #
-# Usage: jruby examples/opml.rb opml.xml
+# Usage: jruby -rubygems -Ilib -Ivendor examples/opml.rb opml.xml
+# Alt usage: ./examples/opml.rb opml.xml
 #
 # Dependencies:
 #
 # hpricot (0.6.164)
-# threadify (1.1.0) (optional, uncomment in code)
 
 require 'uri'
-require 'rubygems'
 require 'hpricot'
-#require 'threadify'
-require File.dirname(__FILE__) + '/../lib/http_reactor'
+require 'http_reactor'
 
 def requests
   @requests ||= begin
@@ -22,10 +20,8 @@ def requests
   end
 end
 
-#uris.threadify(:each_slice, 1) do |slice|
-  HttpReactor::Client.new(requests) do |response, context|
-    puts "Response: #{response.status_line.status_code}"
-    puts "Content length: #{response.body.length}"
-  end
-#end
+HttpReactor::Client.new(requests) do |response, context|
+  puts "Response: #{response.status_line.status_code}"
+  puts "Content length: #{response.body.length}"
+end  
 puts "Processed #{requests.length} feeds"

@@ -1,11 +1,15 @@
 require 'rake'
 require 'rake/rdoctask'
+require 'rake/testtask'
+
+$VERBOSE=nil
 
 desc 'Default: run tests.'
 task :default => [:test]
 
 desc 'Run tests.'
-task :test do
+task :test do |t|
+  $LOAD_PATH << 'vendor'
   require File.dirname(__FILE__) + '/test/client_test'
 end
 
@@ -28,6 +32,7 @@ begin
     gemspec.homepage = "http://github.com/aeden/jruby-http-reactor"
     gemspec.description = ""
     gemspec.authors = ["Anthony Eden"]
+    gemspec.require_paths << 'vendor'
     gemspec.files.exclude 'docs/**/*'
     gemspec.files.exclude '.gitignore'
   end
