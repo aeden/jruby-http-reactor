@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
      "Rakefile",
      "VERSION",
      "examples/opml.rb",
+     "examples/textfile.rb",
      "jruby-http-reactor.gemspec",
      "lib/http_reactor.rb",
      "lib/http_reactor/client.rb",
