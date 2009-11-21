@@ -1,4 +1,8 @@
+h2. About 
+
 A client that uses the Apache HttpCore NIO library to do HTTP requests.
+
+h2. Usage
 
 <pre>
 require 'http_reactor'
@@ -11,3 +15,9 @@ HttpReactor::Client.new(requests) do |response, context|
   puts "Response body: #{response.body}"
 end
 </pre>
+
+h2. Running Tests
+
+To run the tests you'll need a network connection and you'll need to run rake in JRuby:
+
+jruby -S rake
